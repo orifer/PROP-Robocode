@@ -1,4 +1,3 @@
-
 package edu.upc.epsevg.prop.robocode;
 
 import robocode.*;
@@ -17,6 +16,10 @@ public class Robocop extends AdvancedRobot {
     // Posicio de enemic
     int enemyX = 0;
     int enemyY = 0;
+    private static double enemylife;
+    private double direction;
+    private double movimiento;
+    private int dire = 1;
 
     public void run() {
         setColors(Color.BLACK, Color.BLACK, Color.RED);
@@ -100,6 +103,37 @@ public class Robocop extends AdvancedRobot {
         while (bearing < -180) bearing += 360;
         return bearing;
     }
+    
+    /**
+     * Metodo para cuando le damos a un enemigo
+     * @param e nos permite obtener info del impacto al enemigo
+     */
+    @Override
+    public void onBulletHit(BulletHitEvent e){
+        enemylife-=Rules.MAX_BULLET_POWER*4;
+    }
+    
+    public void analizaSituacion(ScannedRobotEvent e) { 
+        // Grados entre robocop y enemigo y orientación de robocop
+        direction = e.getBearingRadians()+getHeadingRadians();  
+        
+        // Velocidad de robocop y seno(Orientación del enemigo y direction)
+        movimiento = e.getVelocity()+Math.sin(e.getHeadingRadians()+direction);        
+        
+        // El cañón gira a la derecha en la siguiente ejecución
+        //el ángulo relativo de movimiento - orientación de robocop
+        setTurnGunRightRadians(Utils.normalRelativeAngle(movimiento-getHeadingRadians()));
+        
+        // El radar gira a la izquierda en la siguiente ejecución
+        //el ángulo restante en el giro del radar
+        setTurnRadarLeftRadians(getRadarTurnRemainingRadians());                        
+       
+        // Máxima velocidad de robocop (píxeles/giros)
+        setMaxVelocity(Rules.MAX_VELOCITY/getTurnRemaining());
+        
+        // Robocop se mueve
+        setAhead(100*dire);
+    } 
 
     @Override
     public void onPaint(Graphics2D g) {
