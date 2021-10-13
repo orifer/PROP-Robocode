@@ -201,9 +201,8 @@ public class Robocop extends AdvancedRobot {
             Math.abs(getGunTurnRemaining()) < 8 &&
             enemyDistance < fireDistance &&
             getEnergy() > 5
-        ) {
+        )
             setFire(firePower);
-        }
 
         // DEBUG //
 //        setDebugProperty("Body Heading: ", "" + getHeading());
