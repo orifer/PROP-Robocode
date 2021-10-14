@@ -4,6 +4,7 @@ import robocode.*;
 import robocode.util.Utils;
 
 import java.awt.*;
+import java.awt.geom.Point2D;
 
 /**
  * @author Oriol and Denise
@@ -28,6 +29,8 @@ public class Robocop extends AdvancedRobot {
     double enemyLastKnownEnergy = 0;
     int enemyX = 0;
     int enemyY = 0;
+    int enemyPredictedX = 0;
+    int enemyPredictedY = 0;
 
     /**
      * Funcio principal
@@ -167,45 +170,51 @@ public class Robocop extends AdvancedRobot {
      * Fija el radar al robot que ha escaneado y mas cositas
      */
     public void onScannedRobot(ScannedRobotEvent e) {
-
-        // Parte 1: Radar
         enemy = e;
 
+        // Radar
         // Calcula cuanto ha de moverse el radar para fijar al enemigo, para saberlo usamos el bearing, que nos dice donde se encuentra el enemigo en relacion a donde apunta nuestro tanque, entonces tenemos que restar la direccion del radar con la direccion de nuestro tanque y sumando el bearing del enemigo tenemos cuanto hay que moverse para centrarlo. Esto mejor meterlo en la docu pero no se hasta que punto documentar aqui en codigo.
         // El 0.01 es para que no llegue a 0 y piense que lo ha perdido
         double radarToEnemyAngle = normalizeBearing(getHeading() - getRadarHeading() + e.getBearing()) + 0.01;
-
-        // Movemos en radar los angulos que hemos calculado,
         setTurnRadarRight(radarToEnemyAngle);
 
-        // Parte 2: Cañon
+        // Gun
+        // Ajusta la potencia de disparo segun la distancia del enemigo, hasta maximo 3 segun las reglas
+        firePower = Math.min(450 / enemy.getDistance(), Rules.MAX_BULLET_POWER); // Probar varios valores hasta encontrar uno bueno
 
-        // Esto lo usaremos para calcular donde disparar
-        double enemyDistance = e.getDistance();
-        double enemyVelocity = e.getVelocity();
-        double enemyHeading = e.getHeading();
-        double absoluteAngleToEnemy = Math.toRadians(getHeading() + e.getBearing());
+        // Mou el cano per apuntar al enemic
+        moveGun();
 
-        // Igual que con el radar
-        double gunToEnemyAngle = normalizeBearing(getHeading() - getGunHeading() + e.getBearing());
-        setTurnGunRight(gunToEnemyAngle);
+        // Dispara si es compleixen les condicion
+        fireIfPossible();
+    }
+
+    /**
+     *  Posiciona el cano en direccio a l'enemic per poder disparar
+     */
+    private void moveGun() {
+        double enemyDistance = enemy.getDistance();
+        double enemyVelocity = enemy.getVelocity();
+        double enemyHeading = Math.toRadians(enemy.getHeading());
+        double absoluteAngleToEnemy = Math.toRadians(getHeading() + enemy.getBearing());
+
+        // Calcula la velocitat de la bala segons la wiki de robocode
+        double bulletSpeed = 20 - firePower * 3;
+
+        // Calcla el temps que triga el tir en impactar -> Distancia = Velocitat x Temps ->  per tant ->  Temps = Distancia / Rate
+        long time = (long) (enemyDistance / bulletSpeed);
 
         // Calcula la posicio del enemic
-        // Falta explicar como funciona
-        enemyX = (int) (getX() + Math.sin(absoluteAngleToEnemy) * e.getDistance());
-        enemyY = (int) (getY() + Math.cos(absoluteAngleToEnemy) * e.getDistance());
+        enemyX = (int) (getX() + Math.sin(absoluteAngleToEnemy) * enemy.getDistance());
+        enemyY = (int) (getY() + Math.cos(absoluteAngleToEnemy) * enemy.getDistance());
+        enemyPredictedX = (int) (enemyX + Math.sin(enemyHeading) * enemyVelocity * time);
+        enemyPredictedY = (int) (enemyY + Math.cos(enemyHeading) * enemyVelocity * time);
 
-        // Dispara si cumple las condiciones
-        if (
-            getGunHeat() == 0 &&
-            Math.abs(getGunTurnRemaining()) < 8 &&
-            enemyDistance < fireDistance &&
-            getEnergy() > 5
-        ) {
-            // Ajusta la potencia de disparo segun la distancia del enemigo, hasta maximo 3 segun las reglas
-            firePower = Math.min(450/enemyDistance, Rules.MAX_BULLET_POWER); // Probar varios valores hasta encontrar uno bueno
-            setFire(firePower);
-        }
+        // Calcula l'angle absolut de la posicio enemiga
+        double absDeg = absoluteBearing(getX(), getY(), enemyPredictedX, enemyPredictedY);
+
+        // Gira el cano a la posicio calculada
+        setTurnGunRight(normalizeBearing(absDeg - getGunHeading()));
 
         // DEBUG //
 //        setDebugProperty("Body Heading: ", "" + getHeading());
@@ -213,6 +222,20 @@ public class Robocop extends AdvancedRobot {
 //        setDebugProperty("Enemy Bearing : ", "" + e.getBearing());
 //        setDebugProperty("turnAngle : ", "" + radarToEnemyAngle);
 //        setDebugProperty("angle : ", "" + absoluteAngleToEnemy);
+    }
+
+    /**
+     * Dispara si es compleixen les condicions i ho fa amb la potencia adecuada segons la distancia
+     */
+    private void fireIfPossible() {
+        // Dispara si cumple las condiciones
+        if (
+                getGunHeat() == 0 &&
+                        Math.abs(getGunTurnRemaining()) < 8 &&
+                        enemyDistance < fireDistance &&
+                        getEnergy() > 5
+        )
+            setFire(firePower);
     }
 
     /**
@@ -236,9 +259,34 @@ public class Robocop extends AdvancedRobot {
         enemylife-=Rules.MAX_BULLET_POWER*4;
     }
 
+    /**
+     * Normaliza un angulo absoluto a uno relativo de -180 a +180
+     * @param bearing es el angulo absoluto
+     */
     double normalizeBearing(double bearing) {
         while (bearing > 180) bearing -= 360;
         while (bearing < -180) bearing += 360;
+        return bearing;
+    }
+
+    /**
+     * Calcula l'angule absolut entre dos punts
+     * @param x1,y1 es el primer punt
+     * @param x2,y2 es el segon punt
+     * Retorna un valor double del 0 al 360
+     */
+    double absoluteBearing(double x1, double y1, double x2, double y2) {
+        double xo = x2-x1;
+        double yo = y2-y1;
+        double hyp = Point2D.distance(x1, y1, x2, y2);
+        double arcSin = Math.toDegrees(Math.asin(xo / hyp));
+        double bearing = 0;
+
+        if      (xo > 0 && yo > 0) bearing = arcSin; // Dos positius: inferior-esquerra
+        else if (xo < 0 && yo > 0) bearing = 360 + arcSin; // x neg, y pos: inferior-dreta. arcsin es negatiu, seria 360 - ang
+        else if (xo > 0 && yo < 0) bearing = 180 - arcSin;// x pos, y neg: superior-esquerra
+        else if (xo < 0 && yo < 0) bearing = 180 - arcSin; // dos negatius: superior-dreta. arcsin es negatiu, seria 180 + ang
+
         return bearing;
     }
 
@@ -246,8 +294,11 @@ public class Robocop extends AdvancedRobot {
     public void onPaint(Graphics2D g) {
         // Posicio enemic
         g.setColor(new Color(0x00, 0xff, 0x00, 0x80));
-        g.drawLine(enemyX, enemyY, (int) getX(), (int) getY());
+        g.drawLine(enemyPredictedX, enemyPredictedY, (int) getX(), (int) getY());
         g.fillRect(enemyX - 20, enemyY - 20, 40, 40);
+
+        // Bolita impacto predicted
+        g.drawOval((int)enemyPredictedX-20, (int)enemyPredictedY-20, 2*20, 2*20);
 
         // Radi
         int r = enemyDistance;
