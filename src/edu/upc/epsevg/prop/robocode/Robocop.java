@@ -15,7 +15,7 @@ public class Robocop extends AdvancedRobot {
     boolean movingAwayFromWall = false;
     int wallDistance = 150;
     int enemyDistance = 300;
-    double firePower = 1.5;
+    double firePower = 1.5; // Por defecto
     int fireDistance = 400;
 
     private double enemyDirection;
@@ -201,8 +201,11 @@ public class Robocop extends AdvancedRobot {
             Math.abs(getGunTurnRemaining()) < 8 &&
             enemyDistance < fireDistance &&
             getEnergy() > 5
-        )
+        ) {
+            // Ajusta la potencia de disparo segun la distancia del enemigo, hasta maximo 3 segun las reglas
+            firePower = Math.min(450/enemyDistance, Rules.MAX_BULLET_POWER); // Probar varios valores hasta encontrar uno bueno
             setFire(firePower);
+        }
 
         // DEBUG //
 //        setDebugProperty("Body Heading: ", "" + getHeading());
