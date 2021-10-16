@@ -8,6 +8,7 @@ import java.awt.geom.Point2D;
 
 /**
  * @author Oriol and Denise
+ * Robot fet per a PROP 2021-2022
  */
 public class Robocop extends AdvancedRobot {
 
@@ -16,12 +17,12 @@ public class Robocop extends AdvancedRobot {
     boolean movingAwayFromWall = false;
     int wallDistance = 150;
     int enemyDistance = 300;
-    double firePower = 1.5; // Por defecto
+    double firePower = 1.5; // Per defecte
     int fireDistance = 400;
 
     private double enemyDirection;
     private double movimiento;
-    private int dire = 1;
+    private int dire;
 
     // Info enemic
     ScannedRobotEvent enemy = null;
@@ -51,26 +52,32 @@ public class Robocop extends AdvancedRobot {
             execute();
         }
     }
-
+    
+    /**
+     * Mètode que fa un anàlisi de la situació de l'enemic
+     * a més adjustem factors com l'orientació, velocitat, i el moviment del radar
+     * y el canó
+     * @param e Permet obtenir info de l'enemic
+     */
     public void analizaSituacion(ScannedRobotEvent e) {
-        // Grados entre robocop y enemigo y orientación de robocop
+        // Graus entre Robocop i l'enemic i orientació de Robocop
         enemyDirection = e.getBearingRadians()+getHeadingRadians();
 
-        // Velocidad de robocop y seno(Orientación del enemigo y direction)
+        // Velocitat de Robocop i sinus(Orientació de l'enemic y direcció)
         movimiento = e.getVelocity()+Math.sin(e.getHeadingRadians()+direction);
 
-        // El cañón gira a la derecha en la siguiente ejecución
-        //el ángulo relativo de movimiento - orientación de robocop
+        // El canó gira cap a la dreta en la següent execució
+        //l'angle relatiu de moviment - orientació de Robocop
         setTurnGunRightRadians(Utils.normalRelativeAngle(movimiento-getHeadingRadians()));
 
-        // El radar gira a la izquierda en la siguiente ejecución
-        //el ángulo restante en el giro del radar
+        // El radar gira a l'esquerra en la següent execució
+        //l'angle restant en el gir del radar
         setTurnRadarLeftRadians(getRadarTurnRemainingRadians());
 
-        // Máxima velocidad de robocop (píxeles/giros)
+        // Màxima velocitat de robocop (píxels/girs)Máxima velocidad de robocop (píxeles/giros)
         setMaxVelocity(Rules.MAX_VELOCITY/getTurnRemaining());
 
-        // Robocop se mueve
+        // Robocop es mou
         setAhead(100*dire);
     }
 
@@ -156,7 +163,7 @@ public class Robocop extends AdvancedRobot {
 
     /**
      * Retorna cert si som molt a prop del mur del mapa
-     */
+    **/
     private boolean tooCloseToWall() {
         return (
             getX() <= wallDistance ||
@@ -167,25 +174,30 @@ public class Robocop extends AdvancedRobot {
     }
 
     /**
-     * Fija el radar al robot que ha escaneado y mas cositas
-     */
+     * Fixa el radar al robot que ha escanejat 
+     * Aquest mètode es truca automaticament quan al rang del radar detecta un robot
+     * @param e l'esdeveniment scanned-robot establert
+     **/
     public void onScannedRobot(ScannedRobotEvent e) {
         enemy = e;
 
         // Radar
-        // Calcula cuanto ha de moverse el radar para fijar al enemigo, para saberlo usamos el bearing, que nos dice donde se encuentra el enemigo en relacion a donde apunta nuestro tanque, entonces tenemos que restar la direccion del radar con la direccion de nuestro tanque y sumando el bearing del enemigo tenemos cuanto hay que moverse para centrarlo. Esto mejor meterlo en la docu pero no se hasta que punto documentar aqui en codigo.
-        // El 0.01 es para que no llegue a 0 y piense que lo ha perdido
+        // Calcula quant ha de moure's el radar per fixar a l'enemic, per saber-ho 
+        //usem el bearing, que ens diu on es troba l'enemic en relació a on apunta
+        //el nostre tanc, llavors hem de restar la direcció del radar amb
+        //la direcció del nostre tanc i sumant el bearing de l'enemic obtenim quant ens hem de moure per centar-ho. 
+        // El 0.01 es per a que no arribi a 0 i pensi que ho a perdut
         double radarToEnemyAngle = normalizeBearing(getHeading() - getRadarHeading() + e.getBearing()) + 0.01;
         setTurnRadarRight(radarToEnemyAngle);
 
         // Gun
-        // Ajusta la potencia de disparo segun la distancia del enemigo, hasta maximo 3 segun las reglas
+        // Ajusta la potencia de dispar segons la distancia de l'enemic, fins màxim 3 segons les regles
         firePower = Math.min(450 / enemy.getDistance(), Rules.MAX_BULLET_POWER); // Probar varios valores hasta encontrar uno bueno
 
         // Mou el cano per apuntar al enemic
         moveGun();
 
-        // Dispara si es compleixen les condicion
+        // Dispara si es compleixen les condicions
         fireIfPossible();
     }
 
@@ -228,7 +240,7 @@ public class Robocop extends AdvancedRobot {
      * Dispara si es compleixen les condicions i ho fa amb la potencia adecuada segons la distancia
      */
     private void fireIfPossible() {
-        // Dispara si cumple las condiciones
+        // Dispara si cumpleix les condicions
         if (
                 getGunHeat() == 0 &&
                         Math.abs(getGunTurnRemaining()) < 8 &&
@@ -239,29 +251,36 @@ public class Robocop extends AdvancedRobot {
     }
 
     /**
-     * Descripcio del metode
+     * Aquest mètode es trucat quan el nostre robot és copejat per una bala.
+     * @param e l’esdeveniment hit-by-bullet establert 
      */
+    
     public void onHitByBullet(HitByBulletEvent e) {
         // turnLeft(180);
     }
 
+    /**
+     * Aquest mètode es trucat quan el robot xoca amb una paret. 
+     * @param e l’esdeveniment hit-wall establert 
+     */
+    
     public void onHitWall(HitWallEvent e) {
         direction *= -1;
         setAhead(300 * direction);
     }
 
     /**
-     * Metodo para cuando le damos a un enemigo
-     * @param e nos permite obtener info del impacto al enemigo
+     * Mètode per quan encertem i li donem a l'enemic
+     * @param e ens permet rebre info de l'impacte a l'enemic
      */
-    @Override
+    
     public void onBulletHit(BulletHitEvent e) {
         enemylife-=Rules.MAX_BULLET_POWER*4;
     }
 
     /**
-     * Normaliza un angulo absoluto a uno relativo de -180 a +180
-     * @param bearing es el angulo absoluto
+     * Normalitza un angle absolut a un relatiu de -180 a +180
+     * @param bearing es l'angle absolut
      */
     double normalizeBearing(double bearing) {
         while (bearing > 180) bearing -= 360;
@@ -270,7 +289,7 @@ public class Robocop extends AdvancedRobot {
     }
 
     /**
-     * Calcula l'angule absolut entre dos punts
+     * Calcula l'angle absolut entre dos punts
      * @param x1,y1 es el primer punt
      * @param x2,y2 es el segon punt
      * Retorna un valor double del 0 al 360
@@ -289,15 +308,20 @@ public class Robocop extends AdvancedRobot {
 
         return bearing;
     }
-
+    
+    
+    /**
+     * Aquest mètode es truca cada vegada que es pinta el robot.
+     * @param g el que cal utilitzar per pintar elements gràfics per al robot
+     */
     @Override
     public void onPaint(Graphics2D g) {
-        // Posicio enemic
+        // Posició enemic
         g.setColor(new Color(0x00, 0xff, 0x00, 0x80));
         g.drawLine(enemyPredictedX, enemyPredictedY, (int) getX(), (int) getY());
         g.fillRect(enemyX - 20, enemyY - 20, 40, 40);
 
-        // Bolita impacto predicted
+        // Bola impacte predicted
         g.drawOval((int)enemyPredictedX-20, (int)enemyPredictedY-20, 2*20, 2*20);
 
         // Radi
