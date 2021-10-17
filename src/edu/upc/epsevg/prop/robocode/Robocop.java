@@ -103,7 +103,7 @@ public class Robocop extends AdvancedRobot {
             adjustMovementAngle();
 
             // Cambia de direccio si ens han disparat
-            if (enemyFired() && !changedDirection)
+            if (enemyFired() && !changedDirection && !movingAwayFromWall)
                 direction *= -1;
         }
 
@@ -239,7 +239,7 @@ public class Robocop extends AdvancedRobot {
         // Dispara si cumpleix les condicions
         if (
                 getGunHeat() == 0 &&
-                        Math.abs(getGunTurnRemaining()) < 8 &&
+                        Math.abs(getGunTurnRemaining()) < 2 &&
                         enemyDistance < fireDistance &&
                         getEnergy() > 5
         )
