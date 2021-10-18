@@ -59,22 +59,22 @@ public class Robocop extends AdvancedRobot {
      * y el canó
      * @param e Permet obtenir info de l'enemic
      */
-    public void analizaSituacion(ScannedRobotEvent e) {
+    public void analizesituation(ScannedRobotEvent e) {
         // Graus entre Robocop i l'enemic i orientació de Robocop
-        enemyDirection = e.getBearingRadians()+getHeadingRadians();
+        enemyDirection = getHeadingRadians()+e.getBearingRadians();
 
         // Velocitat de Robocop i sinus(Orientació de l'enemic y direcció)
         movimiento = e.getVelocity()+Math.sin(e.getHeadingRadians()+direction);
 
-        // El canó gira cap a la dreta en la següent execució
+        // El canó es torna cap a la dreta en la següent execució
         //l'angle relatiu de moviment - orientació de Robocop
         setTurnGunRightRadians(Utils.normalRelativeAngle(movimiento-getHeadingRadians()));
 
-        // El radar gira a l'esquerra en la següent execució
+        // El radar es torna a l'esquerra en la següent execució
         //l'angle restant en el gir del radar
         setTurnRadarLeftRadians(getRadarTurnRemainingRadians());
 
-        // Màxima velocitat de robocop (píxels/girs)Máxima velocidad de robocop (píxeles/giros)
+        // Màxima velocitat de robocop (píxels/girs)
         setMaxVelocity(Rules.MAX_VELOCITY/getTurnRemaining());
 
         // Robocop es mou
