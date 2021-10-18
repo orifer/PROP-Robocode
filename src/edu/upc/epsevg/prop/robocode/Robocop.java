@@ -86,7 +86,7 @@ public class Robocop extends AdvancedRobot {
      * Nomes moura el radar si aquest no te treball pendent, indicant que ha perdut l'objectiu
      */
     private void radar() {
-        // Si el radar no tiene ordenes pendientes, le hacemos buscar de nuevo
+        // Si el radar no té ordres pendents, li fem buscar de nou
         if (getRadarTurnRemaining() == 0)
             setTurnRadarLeft(Double.POSITIVE_INFINITY);
     }
@@ -102,12 +102,12 @@ public class Robocop extends AdvancedRobot {
         if (enemy != null) {
             adjustMovementAngle();
 
-            // Cambia de direccio si ens han disparat
+            // Canvia de direccio si ens han disparat
             if (enemyFired() && !changedDirection && !movingAwayFromWall)
                 direction *= -1;
         }
 
-        // Cambia de direccio cada x tics
+        // Canvia de direccio cada x tics
 //        if (getTime() % 60 == 0 && !changedDirection) {
 //            direction *= -1;
 
@@ -213,7 +213,7 @@ public class Robocop extends AdvancedRobot {
         // Calcula la velocitat de la bala segons la wiki de robocode
         double bulletSpeed = 20 - 3 * firePower;
 
-        // Calcla el temps que triga el tir en impactar -> Distancia = Velocitat x Temps ->  per tant ->  Temps = Distancia / Rate
+        // Calcula el temps que triga el tir en impactar -> Distancia = Velocitat x Temps ->  per tant ->  Temps = Distancia / Rate
         long time = (long) (enemyDistance / bulletSpeed);
 
         // Calcula la posicio del enemic
