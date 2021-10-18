@@ -77,7 +77,7 @@ public class Robocop extends AdvancedRobot {
         // Màxima velocitat de robocop (píxels/girs)
         setMaxVelocity(Rules.MAX_VELOCITY/getTurnRemaining());
 
-        // Robocop es mou
+        // MOVE
         setAhead(100*dire);
     }
 
